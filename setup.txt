@@ -1,16 +1,58 @@
 py -3.12 -m venv .venv
 ctrl + shift + P -> Select Interpeter
 
-### Run OpenThai2.0-OCR-Text ###
+
+### Run OpenThai2.0-OCR-Text (CPU) ###
 
 pip install onnxruntime opencv-python-headless pyclipper numpy pillow pypdfium2 huggingface_hub
 hf download iapp/OpenThai2.0-OCR-Text --local-dir OpenThai2.0-OCR-Text
 
 python ocr_text.py document.pdf
 
+
 ### Run OpenThai2.0-OCR-Markdown with CPU ###
 
-pip install -e ./OpenThai2.0-OCR-Markdown
 hf download iapp/OpenThai2.0-OCR-Markdown --local-dir OpenThai2.0-OCR-Markdown
+pip install -e ./OpenThai2.0-OCR-Markdown
 
 python ocr_markdown.py document-markdown.pdf
+
+
+### Run OpenThai2.0-OCR-Markdown with GPU (Transformers + CUDA) ###
+
+# 1. check the driver -> read "CUDA Version" at the top right
+nvidia-smi
+
+# 2. install the model and the package (same as the CPU block)
+hf download iapp/OpenThai2.0-OCR-Markdown --local-dir OpenThai2.0-OCR-Markdown
+pip install -e ./OpenThai2.0-OCR-Markdown
+
+# 3. swap the CPU-only torch for the CUDA build, SAME versions
+#    nemotron-parse pins torch<2.14 and torchvision<0.29 -> do not upgrade
+#    an unpinned "pip install torch" pulls 2.15 and breaks numpy/Pillow too
+#    pick the index that matches your driver: cu126 / cu128 / cu130 / cu132
+pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu132
+
+# 4. verify
+pip check
+python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available(), torch.cuda.is_bf16_supported())"
+python -c "from nemotron_parse.inference import DocumentParser; print('ok')"
+
+# 5. run (pick a GPU; omit to use GPU 0)
+$env:CUDA_VISIBLE_DEVICES="0"
+python ocr_markdown.py document-markdown.pdf
+
+# stderr must start with: Running the model on cuda
+
+
+### Troubleshooting ###
+
+# torch.cuda.is_available() == False
+#   -> a CPU-only wheel is installed; redo step 3 with the right --index-url
+
+# pip check reports numpy / Pillow conflicts
+#   -> an unpinned "pip install torch" pulled newer deps; restore them:
+pip install "numpy==2.2.6" "pillow==12.3.0"
+
+# GPU older than Ampere (GTX 10xx/16xx, RTX 20xx)
+#   -> bfloat16 is unsupported; ocr_markdown.py must use torch.float16 instead
