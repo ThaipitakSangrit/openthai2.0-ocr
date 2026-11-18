@@ -43,16 +43,3 @@ $env:CUDA_VISIBLE_DEVICES="0"
 python ocr_markdown.py document-markdown.pdf
 
 # stderr must start with: Running the model on cuda
-
-
-### Troubleshooting ###
-
-# torch.cuda.is_available() == False
-#   -> a CPU-only wheel is installed; redo step 3 with the right --index-url
-
-# pip check reports numpy / Pillow conflicts
-#   -> an unpinned "pip install torch" pulled newer deps; restore them:
-pip install "numpy==2.2.6" "pillow==12.3.0"
-
-# GPU older than Ampere (GTX 10xx/16xx, RTX 20xx)
-#   -> bfloat16 is unsupported; ocr_markdown.py must use torch.float16 instead
