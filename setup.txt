@@ -8,7 +8,7 @@ hf download iapp/OpenThai2.0-OCR-Text --local-dir OpenThai2.0-OCR-Text
 
 python ocr_text.py document.pdf
 
-### Run OpenThai2.0-OCR-Text with CPU ###
+### Run OpenThai2.0-OCR-Markdown with CPU ###
 
 pip install -e ./OpenThai2.0-OCR-Markdown
 hf download iapp/OpenThai2.0-OCR-Markdown --local-dir OpenThai2.0-OCR-Markdown
